@@ -7,8 +7,48 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
+	"strings"
+	"text/template"
 )
 
+const (
+	prompt = `Below is a list of commit messages that have not been squashed. Please squash them into the commit above.
+Please construct a commit message that summarizes the changes in the commits below. Remove spurious messages 
+like "fix typo", "fix lint", "latest", etc... You can use markdown to format the message e.g. to use
+lists.
+{{range .Messages}}
+---
+{{ . }}
+{{end}}
+`
+)
+
+type PromptArgs struct {
+	Messages []string
+}
+
+func reverseList(s []string) []string {
+	n := len(s)
+	ret := make([]string, n)
+	for i := 0; i < n; i++ {
+		ret[n-i-1] = s[i]
+	}
+	return ret
+}
+
+func buildPrompt(messages []string) (string, error) {
+	t, err := template.New("prompt").Parse(prompt)
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+	if err := t.Execute(&sb, &PromptArgs{Messages: messages}); err != nil {
+		return "", err
+	}
+
+	return sb.String(), nil
+}
 func Run(path string, baseBranch string) error {
 	log := zapr.NewLogger(zap.L())
 	r, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{})
@@ -56,16 +96,21 @@ func Run(path string, baseBranch string) error {
 		Order: git.LogOrderCommitterTime,
 	})
 
+	messages := make([]string, 0, 20)
 	if err := cIter.ForEach(func(c *object.Commit) error {
 		if c.Hash == forkCommit.Hash {
 			// We reached the common ancestor so we can stop.
 			return storer.ErrStop
 		}
 		log.Info("Commit", "hash", c.Hash, "message", c.Message)
+		messages = append(messages, c.Message)
 		return nil
 	}); err != nil {
 		return err
 	}
-	
+
+	// Reverse the order of messages
+	messages = reverseList(messages)
+
 	return nil
 }
