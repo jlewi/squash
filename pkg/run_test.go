@@ -2,8 +2,10 @@ package pkg
 
 import (
 	"fmt"
+	"github.com/PullRequestInc/go-gpt3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jlewi/hydros/pkg/util"
+	"os"
 	"testing"
 )
 
@@ -46,11 +48,27 @@ bar
 	}
 }
 
-func Test_run(t *testing.T) {
+func Test_SummarizeLogMessages(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") != "" {
+		t.Skip("Test_SummarizeLogMessages doesn't run in GHA because it requires a git repository and branch")
+	}
 	// An integration test.
 	util.SetupLogger("debug", true)
-	err := Run("/users/jlewi/git_squash", "origin/main")
+
+	apiKey := GetAPIKey()
+	if apiKey == "" {
+		t.Fatalf("Could not locate an OPENAI API key not set")
+	}
+	client := gpt3.NewClient(string(apiKey))
+
+	summary, err := SummarizeLogMessages(client, "/users/jlewi/git_squash", "origin/main")
 	if err != nil {
 		t.Fatalf("Error running; %v", err)
 	}
+
+	if summary == "" {
+		t.Fatalf("Expected summary to be non-empty")
+	}
+
+	t.Logf("Summary:\n%v", summary)
 }

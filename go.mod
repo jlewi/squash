@@ -3,7 +3,10 @@ module github.com/jlewi/squash
 go 1.19
 
 require (
+	github.com/PullRequestInc/go-gpt3 v1.1.13
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/zapr v1.2.3
+	github.com/google/go-cmp v0.5.9
 	github.com/jlewi/hydros v0.0.0-20230221023625-e6c8e6d38257
 	github.com/spf13/cobra v1.6.1
 	go.uber.org/zap v1.19.1
@@ -34,7 +37,6 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
@@ -42,7 +44,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
