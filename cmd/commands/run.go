@@ -2,7 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"github.com/PullRequestInc/go-gpt3"
+	"github.com/go-errors/errors"
 	"github.com/jlewi/hydros/pkg/util"
+	"github.com/jlewi/squash/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +14,9 @@ func NewRunCmd() *cobra.Command {
 	var level string
 	var jsonLog bool
 
+	var path string
+	var base string
+
 	cmd := &cobra.Command{
 		Short: "Summarize the commit logs of a PR",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -18,7 +24,16 @@ func NewRunCmd() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			err := func() error {
-
+				apiKey := pkg.GetAPIKey()
+				if apiKey == "" {
+					return errors.New("Could not locate an OPENAI API key not set")
+				}
+				client := gpt3.NewClient(string(apiKey))
+				summary, err := pkg.SummarizeLogMessages(client, path, base)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Summary:\n%s\n", summary)
 				return nil
 			}()
 			if err != nil {
@@ -27,14 +42,9 @@ func NewRunCmd() *cobra.Command {
 		},
 	}
 
-	//cmd.Flags().StringVarP(&secret, "private-key", "", "", "The uri containing the secret for the GitHub App to Authenticate as. Supported schema file, gcpSecretManager")
-	//cmd.Flags().IntVarP(&githubAppID, "appId", "", hydros.HydrosGitHubAppID, "GitHubAppId.")
-	//cmd.Flags().StringVarP(&org, "org", "o", "PrimerAI", "The GitHub org to obtain the token for")
-	//cmd.Flags().StringVarP(&repo, "repo", "r", "", "The repo obtain the token for")
-	//cmd.Flags().StringVarP(&envFile, "env-file", "f", "", "The file to right the github token to")
-	//
-	//util.IgnoreError(cmd.MarkFlagRequired("private-key"))
-
+	cmd.Flags().StringVarP(&path, "path", "", "", "The path of the repository to summarize the commits of. HEAD should be pointing to the branch to get the commits of")
+	cmd.Flags().StringVarP(&base, "base", "", "origin/main", "The base branch to compare against. It should have a common ancestor with the current branch. It will be used to compute the fork point.")
+	cmd.MarkFlagRequired("path")
 	cmd.PersistentFlags().StringVarP(&level, "level", "", "info", "The logging level.")
 	cmd.PersistentFlags().BoolVarP(&jsonLog, "json-logs", "", false, "Enable json logging.")
 	return cmd
